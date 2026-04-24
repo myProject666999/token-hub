@@ -115,6 +115,7 @@ func (s *PaymentService) ProcessPaymentNotify(req *model.PaymentNotifyRequest) e
 			fmt.Sprintf("充值%.2f元，获得%.2f积分", record.Amount, record.Points),
 			record.OrderNo,
 			"recharge",
+			tx,
 		); err != nil {
 			return err
 		}

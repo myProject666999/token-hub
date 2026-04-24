@@ -62,7 +62,7 @@ func SetupRouter() *gin.Engine {
 			apiKeyAuth.POST("/completions", apiHandler.Completion)
 		}
 
-		admin := api.Group("/admin")
+		admin := api.Group("/v1/admin")
 		admin.Use(middleware.Auth(), middleware.Admin())
 		{
 			admin.GET("/users", userHandler.GetUserList)

@@ -50,17 +50,17 @@ func (s *PointsService) SetPointsRate(rate float64) error {
 	return repository.DB.Model(&config).Update("value", rate).Error
 }
 
-func (s *PointsService) AddPoints(userID uint, amount float64, description, relatedID, relatedType string) error {
-	return repository.DB.Transaction(func(tx *gorm.DB) error {
+func (s *PointsService) AddPoints(userID uint, amount float64, description, relatedID, relatedType string, tx ...*gorm.DB) error {
+	exec := func(db *gorm.DB) error {
 		var user model.User
-		if err := tx.First(&user, userID).Error; err != nil {
+		if err := db.First(&user, userID).Error; err != nil {
 			return err
 		}
 
 		newPoints := user.Points + amount
 		newTotalPoints := user.TotalPoints + amount
 
-		if err := tx.Model(&user).Updates(map[string]interface{}{
+		if err := db.Model(&user).Updates(map[string]interface{}{
 			"points":       newPoints,
 			"total_points": newTotalPoints,
 		}).Error; err != nil {
@@ -77,14 +77,22 @@ func (s *PointsService) AddPoints(userID uint, amount float64, description, rela
 			RelatedType: relatedType,
 		}
 
-		return tx.Create(record).Error
+		return db.Create(record).Error
+	}
+
+	if len(tx) > 0 && tx[0] != nil {
+		return exec(tx[0])
+	}
+
+	return repository.DB.Transaction(func(tx *gorm.DB) error {
+		return exec(tx)
 	})
 }
 
-func (s *PointsService) ConsumePoints(userID uint, amount float64, description, relatedID, relatedType string) error {
-	return repository.DB.Transaction(func(tx *gorm.DB) error {
+func (s *PointsService) ConsumePoints(userID uint, amount float64, description, relatedID, relatedType string, tx ...*gorm.DB) error {
+	exec := func(db *gorm.DB) error {
 		var user model.User
-		if err := tx.First(&user, userID).Error; err != nil {
+		if err := db.First(&user, userID).Error; err != nil {
 			return err
 		}
 
@@ -95,7 +103,7 @@ func (s *PointsService) ConsumePoints(userID uint, amount float64, description, 
 		newPoints := user.Points - amount
 		newUsedPoints := user.UsedPoints + amount
 
-		if err := tx.Model(&user).Updates(map[string]interface{}{
+		if err := db.Model(&user).Updates(map[string]interface{}{
 			"points":      newPoints,
 			"used_points": newUsedPoints,
 		}).Error; err != nil {
@@ -112,7 +120,15 @@ func (s *PointsService) ConsumePoints(userID uint, amount float64, description, 
 			RelatedType: relatedType,
 		}
 
-		return tx.Create(record).Error
+		return db.Create(record).Error
+	}
+
+	if len(tx) > 0 && tx[0] != nil {
+		return exec(tx[0])
+	}
+
+	return repository.DB.Transaction(func(tx *gorm.DB) error {
+		return exec(tx)
 	})
 }
 

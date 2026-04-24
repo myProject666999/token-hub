@@ -154,7 +154,6 @@ router.beforeEach(async (to, from, next) => {
 
   const userStore = useUserStore()
   const isAuthenticated = userStore.isAuthenticated
-  const isAdmin = userStore.isAdmin
 
   if (to.meta.requiresAuth && !isAuthenticated) {
     next({ name: 'Login', query: { redirect: to.fullPath } })
@@ -166,9 +165,14 @@ router.beforeEach(async (to, from, next) => {
     return
   }
 
-  if (to.meta.requiresAdmin && !isAdmin) {
-    next({ name: 'Home' })
-    return
+  if (to.meta.requiresAdmin) {
+    if (!userStore.userInfo && userStore.token) {
+      await userStore.fetchUserInfo()
+    }
+    if (!userStore.isAdmin) {
+      next({ name: 'Home' })
+      return
+    }
   }
 
   next()

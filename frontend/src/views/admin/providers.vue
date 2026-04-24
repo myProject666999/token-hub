@@ -107,7 +107,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getProviderList, createProvider, updateProvider, deleteProvider, getProvider } from '@/api/provider'
 
@@ -219,17 +219,16 @@ const handleSubmit = async () => {
   }
 }
 
-onMounted(() => {
-  loadProviders()
-})
-
-showCreateDialog.value = false
 watch(showCreateDialog, (val) => {
   if (!val) {
     resetForm()
     isEdit.value = false
     editId.value = null
   }
+})
+
+onMounted(() => {
+  loadProviders()
 })
 </script>
 
